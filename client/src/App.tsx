@@ -6,6 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import Home from "./pages/home"; // Assuming you have a Home component
+import CreateResume from "./pages/createResume";
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<Navigate to="/home" replace />} />
         {/* Home Page Route */}
         <Route path="/home" element={<Home />} />
+        <Route path="/resume-builder" element={<CreateResume />} />
       </Routes>
     </Router>
   );
