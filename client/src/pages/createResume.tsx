@@ -176,7 +176,24 @@ const CreateResume = () => {
                   Work Experience
                 </Typography>
                 {workExperiences.map((experience, index) => (
-                  <Box key={index} sx={{ mb: 3 }}>
+                  <Box key={index} sx={{ mb: 3, position: "relative" }}>
+                    {index > 0 && (
+                      <IconButton
+                        sx={{
+                          position: "absolute",
+                          top: -20,
+                          right: -10,
+                          zIndex: 1,
+                        }}
+                        onClick={() => {
+                          const updatedWorkExperiences = [...workExperiences];
+                          updatedWorkExperiences.splice(index, 1);
+                          setWorkExperiences(updatedWorkExperiences);
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    )}
                     <TextField
                       fullWidth
                       label="Job Title"
@@ -323,15 +340,33 @@ const CreateResume = () => {
                   Skills
                 </Typography>
                 {skills.map((skill, index) => (
-                  <TextField
-                    key={index}
-                    fullWidth
-                    label={`Skill ${index + 1}`}
-                    variant="outlined"
-                    margin="normal"
-                    value={skill}
-                    onChange={(e) => handleSkillChange(index, e.target.value)}
-                  />
+                  <Box key={index} sx={{ mb: 1, position: "relative" }}>
+                    {index > 0 && (
+                      <IconButton
+                        sx={{
+                          position: "absolute",
+                          top: -20,
+                          right: -10,
+                          zIndex: 1,
+                        }}
+                        onClick={() => {
+                          const updatedSkills = [...skills];
+                          updatedSkills.splice(index, 1);
+                          setSkills(updatedSkills);
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    )}
+                    <TextField
+                      fullWidth
+                      label={`Skill ${index + 1}`}
+                      variant="outlined"
+                      margin="normal"
+                      value={skill}
+                      onChange={(e) => handleSkillChange(index, e.target.value)}
+                    />
+                  </Box>
                 ))}
                 <Button
                   variant="outlined"
@@ -350,7 +385,24 @@ const CreateResume = () => {
                   Projects
                 </Typography>
                 {projects.map((project, index) => (
-                  <Box key={index} sx={{ mb: 3 }}>
+                  <Box key={index} sx={{ mb: 3, position: "relative" }}>
+                    {index > 0 && (
+                      <IconButton
+                        sx={{
+                          position: "absolute",
+                          top: -20,
+                          right: -10,
+                          zIndex: 1,
+                        }}
+                        onClick={() => {
+                          const updatedProjects = [...projects];
+                          updatedProjects.splice(index, 1);
+                          setProjects(updatedProjects);
+                        }}
+                      >
+                        <CloseIcon />
+                      </IconButton>
+                    )}
                     <TextField
                       fullWidth
                       label="Project Name"
