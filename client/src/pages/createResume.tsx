@@ -77,16 +77,9 @@ const CreateResume = () => {
   const addProject = () =>
     setProjects([...projects, { name: "", description: "" }]);
 
-  // Handle Input Changes
-  type WorkExperienceField =
-    | "jobTitle"
-    | "company"
-    | "duration"
-    | "description";
-
   const handleWorkExperienceChange = (
     index: number,
-    field: WorkExperienceField,
+    field: keyof WorkExperience,
     value: string
   ) => {
     const updatedExperiences = [...workExperiences];
@@ -176,7 +169,8 @@ const CreateResume = () => {
                   Work Experience
                 </Typography>
                 {workExperiences.map((experience, index) => (
-                  <Box key={index} sx={{ mb: 3, position: "relative" }}>
+                  <Box key={index} sx={{ mb: 10, position: "relative" }}>
+                    {/* Remove Work Experience Button */}
                     {index > 0 && (
                       <IconButton
                         sx={{
@@ -194,6 +188,8 @@ const CreateResume = () => {
                         <CloseIcon />
                       </IconButton>
                     )}
+
+                    {/* Job Title */}
                     <TextField
                       fullWidth
                       label="Job Title"
@@ -208,6 +204,8 @@ const CreateResume = () => {
                         )
                       }
                     />
+
+                    {/* Company Name */}
                     <TextField
                       fullWidth
                       label="Company Name"
@@ -222,6 +220,8 @@ const CreateResume = () => {
                         )
                       }
                     />
+
+                    {/* Duration */}
                     <TextField
                       fullWidth
                       label="Duration"
@@ -236,22 +236,73 @@ const CreateResume = () => {
                         )
                       }
                     />
-                    <TextField
-                      fullWidth
-                      label="Description"
-                      variant="outlined"
-                      margin="normal"
-                      value={experience.description}
-                      onChange={(e) =>
-                        handleWorkExperienceChange(
-                          index,
-                          "description",
-                          e.target.value
-                        )
-                      }
-                    />
+
+                    {/* Description with AI Suggestions */}
+                    <Box sx={{ position: "relative" }}>
+                      <TextField
+                        fullWidth
+                        label="Description"
+                        variant="outlined"
+                        margin="normal"
+                        value={experience.description}
+                        onChange={(e) =>
+                          handleWorkExperienceChange(
+                            index,
+                            "description",
+                            e.target.value
+                          )
+                        }
+                      />
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        sx={{
+                          mt: 1,
+                          float: "right",
+                          background:
+                            "linear-gradient(to right, #6a11cb, #2575fc)",
+                          color: "#fff",
+                          boxShadow: "0px 4px 15px rgba(101, 118, 255, 0.4)",
+                          "&:hover": {
+                            background:
+                              "linear-gradient(to right, #4a00e0, #8e2de2)",
+                          },
+                        }}
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(
+                              "http://127.0.0.1:8000/ai-suggestions",
+                              {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                  description: experience.description,
+                                }),
+                              }
+                            );
+                            const data = await response.json();
+
+                            // Append AI suggestion to the description
+                            handleWorkExperienceChange(
+                              index,
+                              "description",
+                              data.suggestion
+                            );
+                          } catch (error) {
+                            console.error(
+                              "Error fetching AI suggestions:",
+                              error
+                            );
+                          }
+                        }}
+                      >
+                        AI Suggestions
+                      </Button>
+                    </Box>
                   </Box>
                 ))}
+
+                {/* Add Work Experience Button */}
                 <Button
                   variant="outlined"
                   startIcon={<AddCircleOutlineIcon />}
