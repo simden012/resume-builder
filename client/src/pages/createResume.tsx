@@ -270,6 +270,7 @@ const CreateResume = () => {
                         }}
                         onClick={async () => {
                           try {
+                            console.log(experience.description);
                             const response = await fetch(
                               "http://127.0.0.1:8000/ai-suggestions",
                               {
@@ -281,7 +282,7 @@ const CreateResume = () => {
                               }
                             );
                             const data = await response.json();
-
+                            console.log(data);
                             // Append AI suggestion to the description
                             handleWorkExperienceChange(
                               index,
