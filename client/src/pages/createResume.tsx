@@ -1,22 +1,28 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
-  Box,
   Container,
   Typography,
   Stepper,
   Step,
   StepLabel,
-  Button,
-  TextField,
   Paper,
+  Box,
+  Button,
+  Card,
+  CardMedia,
+  CardContent,
+  TextField,
 } from "@mui/material";
+import Input from "@material-ui/core/Input";
 import Grid from "@mui/material/Grid2";
 import WorkExperienceForm from "../components/workExperience";
 import EducationForm from "../components/education";
 import SkillsForm from "../components/skills";
 import ProjectsForm from "../components/projects";
-
+import { serverLocalUrl } from "../constants/constants";
+import { Template } from "../interfaces/types";
 const steps = [
+  "Choose Template",
   "Personal Info",
   "Work Experience",
   "Education",
@@ -27,10 +33,24 @@ const steps = [
 
 const CreateResume = () => {
   const [activeStep, setActiveStep] = useState(0);
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>();
 
   const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
 
+  useEffect(() => {
+    const fetchTemplates = async () => {
+      try {
+        const response = await fetch(`${serverLocalUrl}/templates`);
+        const data = await response.json();
+        setTemplates(data.templates);
+      } catch (error) {
+        console.error("Error fetching templates:", error);
+      }
+    };
+    fetchTemplates();
+  }, []);
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" align="center" gutterBottom>
@@ -51,14 +71,53 @@ const CreateResume = () => {
       <Grid
         container
         spacing={4}
-        sx={{
-          minHeight: "100vh",
-          justifyContent: "center",
-        }}
+        sx={{ minHeight: "100vh", justifyContent: "center" }}
       >
         <Grid sx={{ xs: 12, md: 8, width: "80%" }}>
           <Paper sx={{ p: 4 }}>
+            {/* Choose Template Step */}
             {activeStep === 0 && (
+              <>
+                <Typography variant="h6" gutterBottom>
+                  Choose a Template
+                </Typography>
+                <Grid container spacing={2}>
+                  {templates.map((template) => (
+                    <Grid
+                      sx={{ xs: 12, sm: 6, md: 4, width: "80%" }}
+                      key={template.name}
+                    >
+                      <Card
+                        sx={{
+                          border:
+                            selectedTemplate === template.name
+                              ? "2px solid #007bff"
+                              : "1px solid #ddd",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => setSelectedTemplate(template.name)}
+                      >
+                        <CardMedia
+                          component="img"
+                          height="200"
+                          width="100"
+                          image={template.path}
+                          alt={template.name}
+                        />
+                        <CardContent>
+                          <Typography variant="body2" align="center">
+                            {template.name}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  ))}
+                </Grid>
+              </>
+            )}
+
+            {/* Other Steps */}
+            {activeStep === 1 && (
               <>
                 <Typography variant="h6" gutterBottom>
                   Personal Information
@@ -80,13 +139,14 @@ const CreateResume = () => {
                   label="Phone Number"
                   variant="outlined"
                   margin="normal"
+                  type="number"
                 />
               </>
             )}
-            {activeStep === 1 && <WorkExperienceForm></WorkExperienceForm>}
-            {activeStep === 2 && <EducationForm></EducationForm>}
-            {activeStep === 3 && <SkillsForm></SkillsForm>}
-            {activeStep === 4 && <ProjectsForm></ProjectsForm>}
+            {activeStep === 2 && <WorkExperienceForm></WorkExperienceForm>}
+            {activeStep === 3 && <EducationForm></EducationForm>}
+            {activeStep === 4 && <SkillsForm></SkillsForm>}
+            {activeStep === 5 && <ProjectsForm></ProjectsForm>}
 
             {/* Navigation Buttons */}
             <Box
@@ -99,7 +159,10 @@ const CreateResume = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleNext}
-                disabled={activeStep === steps.length - 1}
+                disabled={
+                  activeStep === steps.length - 1 ||
+                  (activeStep === 0 && !selectedTemplate)
+                }
               >
                 {activeStep === steps.length - 1 ? "Finish" : "Next"}
               </Button>

@@ -13,3 +13,8 @@ export interface Education {
   institution: string;
   year: string;
 }
+
+export interface Template {
+  name: string;
+  path: string;
+}
