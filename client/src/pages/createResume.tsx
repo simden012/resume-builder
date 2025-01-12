@@ -300,7 +300,8 @@ const CreateResume = () => {
                             )
                           }
                           multiline
-                          rows={4}
+                          minRows={1}
+                          maxRows={8}
                         />
                         <Button
                           variant="contained"
