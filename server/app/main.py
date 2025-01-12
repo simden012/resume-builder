@@ -21,7 +21,8 @@ app.add_middleware(
 api_token = os.getenv("LLAMA_API_KEY")
 
 llama = LlamaAPI(api_token)
-class DescriptionRequest(BaseModel):
+class SuggestionRequest(BaseModel):
+    typeOfSuggestion: str ## job or project
     description: str
 
 
@@ -30,21 +31,31 @@ def read_root():
     return {"message" : "welcome time to start the grind bitch"}
 
 @app.post("/ai-suggestions")
-def ai_suggestions(data: DescriptionRequest):
+def ai_suggestions(data: SuggestionRequest):
     description = data.description
+    typeOfSuggestion = data.typeOfSuggestion
     try:
         api_request_json = {
-        "model": "llama3.1-70b",
-        "messages": [
-            {"role": "system", "content": "You are a resume assistant."},
-            {"role": "user", "content": f"Improve this job description for a resume: {description}"},
-        ]
+            "model": "llama3.1-70b",
+            "messages": [
+                {"role": "system", "content": "You are a resume assistant."},
+                {"role": "user", "content": f"""
+                    Improve this {typeOfSuggestion} description for a resume: {description}
+
+                    Provide exactly 3 improved suggestions. Format them as follows:
+                    1. [First Suggestion]
+                    2. [Second Suggestion]
+                    3. [Third Suggestion]
+                                    """},
+                                ]
         }
 
         response = llama.run(api_request_json)
-        response_json = response.json()
-        suggestion = response_json["choices"][0]["message"]["content"].strip()
+        response_text = response.json()["choices"][0]["message"]["content"]
 
-        return {"suggestion": suggestion}
+        suggestions = response_text.split("\n")
+        clean_suggestions = [s.strip() for s in suggestions if s.strip().startswith(("1.", "2.", "3."))]
+
+        return {"suggestions": clean_suggestions}
     except Exception as e:
         return {"error": str(e)}
