@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from dotenv import load_dotenv
 # from app.routers import resume
 from llamaapi import LlamaAPI
@@ -18,6 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+TEMPLATE_DIR = "./app/templates"
+
 api_token = os.getenv("LLAMA_API_KEY")
 
 llama = LlamaAPI(api_token)
@@ -28,7 +31,19 @@ class SuggestionRequest(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"message" : "welcome time to start the grind bitch"}
+    return {"message" : "welcome to the resume builder api"}
+
+@app.get("/templates")
+def get_templates():
+    templates = [{"name": f, "path": f"/templates/{f}"} for f in os.listdir(TEMPLATE_DIR)]
+    return {"templates": templates}
+
+@app.get("/template-preview/{filename}")
+def get_template_preview(filename: str):
+    filepath = os.path.join(TEMPLATE_DIR, filename)
+    if os.path.exists(filepath):
+        return FileResponse(filepath)
+    return {"error": "File not found"}
 
 @app.post("/ai-suggestions")
 def ai_suggestions(data: SuggestionRequest):
