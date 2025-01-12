@@ -17,13 +17,13 @@ import { useGlobalState } from "../context/GlobalStateContext";
 import { WorkExperience } from "../interfaces/types";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
-
+import { serverLocalUrl } from "../constants/constants";
 const WorkExperienceForm = () => {
   const { workExperiences, setWorkExperiences } = useGlobalState();
 
   const handleChange = (
     index: number,
-    field: keyof (typeof workExperiences)[0],
+    field: keyof WorkExperience,
     value: string
   ) => {
     const updatedExperiences = [...workExperiences];
@@ -37,18 +37,9 @@ const WorkExperienceForm = () => {
       { jobTitle: "", company: "", duration: "", description: "" },
     ]);
   };
-  const [open, setOpen] = React.useState(false);
-  const [suggestions, setSuggestions] = React.useState([]);
-  const [loading, setLoading] = React.useState(false);
-  const handleWorkExperienceChange = (
-    index: number,
-    field: keyof WorkExperience,
-    value: string
-  ) => {
-    const updatedExperiences = [...workExperiences];
-    updatedExperiences[index][field] = value;
-    setWorkExperiences(updatedExperiences);
-  };
+  const [open, setOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [loading, setLoading] = useState(false);
   return (
     <>
       <Typography variant="h6" gutterBottom>
@@ -58,17 +49,14 @@ const WorkExperienceForm = () => {
         const handleOpenSuggestions = async () => {
           setLoading(true);
           try {
-            const response = await fetch(
-              "http://127.0.0.1:8000/ai-suggestions",
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  typeOfSuggestion: "job",
-                  description: experience.description,
-                }),
-              }
-            );
+            const response = await fetch(`${serverLocalUrl}/ai-suggestions`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                typeOfSuggestion: "job",
+                description: experience.description,
+              }),
+            });
             const data = await response.json();
             setSuggestions(data.suggestions || []);
             setOpen(true);
@@ -112,9 +100,7 @@ const WorkExperienceForm = () => {
               variant="outlined"
               margin="normal"
               value={experience.jobTitle}
-              onChange={(e) =>
-                handleWorkExperienceChange(index, "jobTitle", e.target.value)
-              }
+              onChange={(e) => handleChange(index, "jobTitle", e.target.value)}
             />
 
             {/* Company Name */}
@@ -124,21 +110,16 @@ const WorkExperienceForm = () => {
               variant="outlined"
               margin="normal"
               value={experience.company}
-              onChange={(e) =>
-                handleWorkExperienceChange(index, "company", e.target.value)
-              }
+              onChange={(e) => handleChange(index, "company", e.target.value)}
             />
 
-            {/* Duration */}
             <TextField
               fullWidth
               label="Duration"
               variant="outlined"
               margin="normal"
               value={experience.duration}
-              onChange={(e) =>
-                handleWorkExperienceChange(index, "duration", e.target.value)
-              }
+              onChange={(e) => handleChange(index, "duration", e.target.value)}
             />
 
             {/* Description with AI Suggestions */}
@@ -150,11 +131,7 @@ const WorkExperienceForm = () => {
                 margin="normal"
                 value={experience.description}
                 onChange={(e) =>
-                  handleWorkExperienceChange(
-                    index,
-                    "description",
-                    e.target.value
-                  )
+                  handleChange(index, "description", e.target.value)
                 }
                 multiline
                 minRows={1}
