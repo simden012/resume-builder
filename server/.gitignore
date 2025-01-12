@@ -3,3 +3,6 @@ venv
 
 #env file
 .env
+
+#cache file
+app/__pycache__
