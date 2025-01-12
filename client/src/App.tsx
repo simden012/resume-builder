@@ -12,9 +12,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        {/* Default Route */}
         <Route path="/" element={<Navigate to="/home" replace />} />
-        {/* Home Page Route */}
         <Route path="/home" element={<Home />} />
         <Route path="/resume-builder" element={<CreateResume />} />
       </Routes>
