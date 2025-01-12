@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 # from app.routers import resume
 from llamaapi import LlamaAPI
@@ -18,8 +19,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.mount("/app/templates", StaticFiles(directory="app/templates"), name="app/templates")
 
-TEMPLATE_DIR = "./app/templates"
+TEMPLATE_DIR = "./app/templates/pdf"
 
 api_token = os.getenv("LLAMA_API_KEY")
 
@@ -35,7 +37,7 @@ def read_root():
 
 @app.get("/templates")
 def get_templates():
-    templates = [{"name": f, "path": f"/templates/{f}"} for f in os.listdir(TEMPLATE_DIR)]
+    templates = [{"name": os.path.splitext(f)[0], "path": f"/app/templates"} for f in os.listdir(TEMPLATE_DIR)]
     return {"templates": templates}
 
 @app.get("/template-preview/{filename}")

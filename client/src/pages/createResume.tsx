@@ -81,36 +81,36 @@ const CreateResume = () => {
                   Choose a Template
                 </Typography>
                 <Grid container spacing={2}>
-                  {templates.map((template) => (
-                    <Grid
-                      sx={{ xs: 12, sm: 6, md: 4, width: "80%" }}
-                      key={template.name}
-                    >
-                      <Card
-                        sx={{
-                          border:
-                            selectedTemplate === template.name
-                              ? "2px solid #007bff"
-                              : "1px solid #ddd",
-                          cursor: "pointer",
-                        }}
-                        onClick={() => setSelectedTemplate(template.name)}
-                      >
-                        <CardMedia
-                          component="img"
-                          height="200"
-                          width="100"
-                          image={template.path}
-                          alt={template.name}
-                        />
-                        <CardContent>
-                          <Typography variant="body2" align="center">
-                            {template.name}
-                          </Typography>
-                        </CardContent>
-                      </Card>
-                    </Grid>
-                  ))}
+                  {templates.map((template) => {
+                    const imgPath = `${serverLocalUrl}${template.path}/png/${template.name}.png`;
+                    console.log(imgPath);
+                    return (
+                      <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={template.name}>
+                        <Card
+                          sx={{
+                            height: 600,
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-between",
+                            border:
+                              selectedTemplate === template.name
+                                ? "2px solid #007bff"
+                                : "1px solid #ddd",
+                            cursor: "pointer",
+                            boxShadow: "0px 4px 10px rgba(0,0,0,0.1)",
+                          }}
+                          onClick={() => setSelectedTemplate(template.name)}
+                        >
+                          <CardMedia
+                            component="img"
+                            sx={{ height: 600, objectFit: "cover" }}
+                            image={imgPath}
+                            alt={template.name}
+                          />
+                        </Card>
+                      </Grid>
+                    );
+                  })}
                 </Grid>
               </>
             )}
