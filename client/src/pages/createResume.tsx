@@ -75,7 +75,6 @@ const CreateResume = () => {
       >
         <Grid sx={{ xs: 12, md: 8, width: "80%" }}>
           <Paper sx={{ p: 4 }}>
-            {/* Choose Template Step */}
             {activeStep === 0 && (
               <>
                 <Typography variant="h6" gutterBottom>
@@ -115,8 +114,6 @@ const CreateResume = () => {
                 </Grid>
               </>
             )}
-
-            {/* Other Steps */}
             {activeStep === 1 && (
               <>
                 <Typography variant="h6" gutterBottom>
@@ -148,7 +145,6 @@ const CreateResume = () => {
             {activeStep === 4 && <SkillsForm></SkillsForm>}
             {activeStep === 5 && <ProjectsForm></ProjectsForm>}
 
-            {/* Navigation Buttons */}
             <Box
               sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}
             >
