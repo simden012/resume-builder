@@ -1,23 +1,4 @@
-import React, { useState } from "react";
-import {
-  Box,
-  Container,
-  Typography,
-  Stepper,
-  Step,
-  StepLabel,
-  Button,
-  TextField,
-  Paper,
-  IconButton,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  List,
-  ListItem,
-  ListItemButton,
-} from "@mui/material";
+import { Box, Typography, Button, TextField, IconButton } from "@mui/material";
 import { useGlobalState } from "../context/GlobalStateContext";
 import { Education } from "../interfaces/types";
 import Grid from "@mui/material/Grid2";
@@ -30,11 +11,11 @@ const EducationForm = () => {
 
   const handleChange = (
     index: number,
-    field: keyof Education, // Ensures field is a valid key in Education
+    field: keyof Education,
     value: string
   ) => {
     const updatedEducations = [...educations];
-    updatedEducations[index][field] = value; // Type-safe access
+    updatedEducations[index][field] = value;
     setEducations(updatedEducations);
   };
 

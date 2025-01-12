@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import {
   Box,
-  Container,
   Typography,
-  Stepper,
-  Step,
-  StepLabel,
   Button,
   TextField,
-  Paper,
   IconButton,
   Dialog,
   DialogActions,
@@ -20,8 +15,6 @@ import {
 } from "@mui/material";
 import { useGlobalState } from "../context/GlobalStateContext";
 import { WorkExperience } from "../interfaces/types";
-import Grid from "@mui/material/Grid2";
-import { styled } from "@mui/material/styles";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
 
@@ -44,7 +37,6 @@ const WorkExperienceForm = () => {
       { jobTitle: "", company: "", duration: "", description: "" },
     ]);
   };
-  // State for AI Suggestions Modal
   const [open, setOpen] = React.useState(false);
   const [suggestions, setSuggestions] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -54,7 +46,7 @@ const WorkExperienceForm = () => {
     value: string
   ) => {
     const updatedExperiences = [...workExperiences];
-    updatedExperiences[index][field] = value; // Now TypeScript knows `field` is a valid key
+    updatedExperiences[index][field] = value;
     setWorkExperiences(updatedExperiences);
   };
   return (
@@ -63,7 +55,6 @@ const WorkExperienceForm = () => {
         Work Experience
       </Typography>
       {workExperiences.map((experience, index) => {
-        // Fetch AI Suggestions
         const handleOpenSuggestions = async () => {
           setLoading(true);
           try {
@@ -88,16 +79,14 @@ const WorkExperienceForm = () => {
           }
         };
 
-        // Handle Selection of a Suggestion
         const handleSelectSuggestion = (suggestion: string) => {
           const sliced_suggestion = suggestion.slice(3).trim();
           handleChange(index, "description", sliced_suggestion);
-          setOpen(false); // Close the modal after selection
+          setOpen(false);
         };
 
         return (
           <Box key={index} sx={{ mb: 10, position: "relative" }}>
-            {/* Remove Work Experience Button */}
             {index > 0 && (
               <IconButton
                 sx={{

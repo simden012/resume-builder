@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { WorkExperience, Project, Education } from "../interfaces/types";
 
-// Define the context type
 interface GlobalStateContextType {
   workExperiences: WorkExperience[];
   setWorkExperiences: React.Dispatch<React.SetStateAction<WorkExperience[]>>;

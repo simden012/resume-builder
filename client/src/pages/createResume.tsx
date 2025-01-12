@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { WorkExperience, Education, Project } from "../interfaces/types";
+import { useState } from "react";
 import {
   Box,
   Container,
@@ -10,19 +9,8 @@ import {
   Button,
   TextField,
   Paper,
-  IconButton,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  List,
-  ListItem,
-  ListItemButton,
 } from "@mui/material";
 import Grid from "@mui/material/Grid2";
-import { styled } from "@mui/material/styles";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import CloseIcon from "@mui/icons-material/Close";
 import WorkExperienceForm from "../components/workExperience";
 import EducationForm from "../components/education";
 import SkillsForm from "../components/skills";
@@ -60,7 +48,6 @@ const CreateResume = () => {
         ))}
       </Stepper>
 
-      {/* Main Content */}
       <Grid
         container
         spacing={4}
@@ -69,7 +56,6 @@ const CreateResume = () => {
           justifyContent: "center",
         }}
       >
-        {/* Form Section */}
         <Grid sx={{ xs: 12, md: 8, width: "80%" }}>
           <Paper sx={{ p: 4 }}>
             {activeStep === 0 && (
