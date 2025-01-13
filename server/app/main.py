@@ -1,12 +1,13 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+from docx import Document
 from dotenv import load_dotenv
 # from app.routers import resume
 from llamaapi import LlamaAPI
-import json
+import uuid
 import os
 
 load_dotenv()
@@ -22,6 +23,7 @@ app.add_middleware(
 app.mount("/app/templates", StaticFiles(directory="app/templates"), name="app/templates")
 
 TEMPLATE_DIR = "./app/templates/pdf"
+GENERATED_RESUME_DIR = "./generated_resumes"
 
 api_token = os.getenv("LLAMA_API_KEY")
 
@@ -76,3 +78,78 @@ def ai_suggestions(data: SuggestionRequest):
         return {"suggestions": clean_suggestions}
     except Exception as e:
         return {"error": str(e)}
+    
+@app.post("/generate-resume")
+async def generate_resume(request: Request):
+    data = await request.json()
+    personal_info = data["personalInfo"]
+    work_experiences = data["workExperiences"]
+    educations = data["educations"]
+    skills = data["skills"]
+    projects = data["projects"]
+    template_name = data["template"]
+    # Load the template
+    template_path = f"./templates/docx/{template_name}.docx"
+    if not os.path.exists(template_path):
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    for paragraph in doc.paragraphs:
+        paragraph.text = paragraph.text.replace("{Your Name}", personal_info["fullName"])
+        paragraph.text = paragraph.text.replace("{Your Email}", personal_info["email"])
+        paragraph.text = paragraph.text.replace("{Your Phone}", personal_info["phone"])
+    doc = Document(template_path)
+
+    # Fill in personal info
+    for paragraph in doc.paragraphs:
+        paragraph.text = paragraph.text.replace("{Your Name}", personal_info["fullName"])
+        paragraph.text = paragraph.text.replace("{Your Email}", personal_info["email"])
+        paragraph.text = paragraph.text.replace("{Your Phone}", personal_info["phone"])
+    
+    # Fill in work experiences
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                if "{Company}" in cell.text:
+                    # Clear placeholder content
+                    cell.text = ""
+                    # Add all work experiences
+                    for exp in work_experiences:
+                        cell.add_paragraph(
+                            f"{exp['Company']}, {exp['Location']} — {exp['Job Title']}\n"
+                            f"{exp['Duration']}\n"
+                            f"{exp['Job Description']}"
+                        )
+
+                if "{Institution}" in cell.text:
+                    # Clear placeholder content
+                    cell.text = ""
+                    # Add all education entries
+                    for edu in educations:
+                        cell.add_paragraph(
+                            f"{edu['Institution']}, {edu['Location']} — {edu['Degree']}\n"
+                            f"{edu['Duration']}"
+                        )
+
+                if "{Project Name}" in cell.text:
+                    # Clear placeholder content
+                    cell.text = ""
+                    # Add all projects
+                    for proj in projects:
+                        cell.add_paragraph(
+                            f"{proj['Project Name']} — {proj['Detail']}\n"
+                            f"{proj['Description']}"
+                        )
+
+    # Fill in skills (optional, as they can be added directly as text)
+    for paragraph in doc.paragraphs:
+        if "{Skill}" in paragraph.text:
+            paragraph.text = ""
+            for skill in skills:
+                paragraph.add_run(f"- {skill}\n")
+
+    # Save the filled template
+    file_id = str(uuid.uuid4())
+    output_path = f"{GENERATED_RESUME_DIR}/resume_{file_id}.docx"
+    doc.save(output_path)
+
+    return {"download_url": f"http://127.0.0.1:8000/download/{file_id}"}
