@@ -88,7 +88,7 @@ const CreateResume = () => {
                       <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={template.name}>
                         <Card
                           sx={{
-                            height: 600,
+                            height: 500,
                             display: "flex",
                             flexDirection: "column",
                             justifyContent: "space-between",
@@ -103,7 +103,7 @@ const CreateResume = () => {
                         >
                           <CardMedia
                             component="img"
-                            sx={{ height: 600, objectFit: "cover" }}
+                            sx={{ height: 500, objectFit: "cover" }}
                             image={imgPath}
                             alt={template.name}
                           />
