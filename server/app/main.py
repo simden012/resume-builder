@@ -3,8 +3,8 @@ from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from docx import Document
 from dotenv import load_dotenv
+from spire.doc import Document, FileFormat, DocPicture
 # from app.routers import resume
 from llamaapi import LlamaAPI
 import uuid
@@ -32,7 +32,95 @@ class SuggestionRequest(BaseModel):
     typeOfSuggestion: str ## job or project
     description: str
 
+def replace_placeholders(document, replacements):
+    """
+    Replaces placeholders in the document with corresponding values.
+    :param document: The Spire.Doc document object.
+    :param replacements: A dictionary of placeholders and their replacements.
+    """
+    for placeholder, value in replacements.items():
+        document.Replace(placeholder, value, False, True)
 
+def add_work_experiences(document, placeholder, experiences):
+    """
+    Replaces a placeholder with multiple work experiences.
+    :param document: The Spire.Doc document object.
+    :param placeholder: Placeholder to replace (e.g., "{WorkExperience}").
+    :param experiences: List of work experiences.
+    """
+    selections = document.FindAllString(placeholder, True, True)
+    if not selections:
+        print(f"Placeholder {placeholder} not found!")
+        return
+
+    experience_text = ""
+    for exp in experiences:
+        experience_text += (
+            f"{exp['company']}, {exp['location']} — {exp['jobTitle']}\n"
+            f"{exp['duration']}\n"
+            f"{exp['description']}\n\n"
+        )
+
+    for selection in selections:
+        selection.GetAsOneRange().Text = experience_text.strip()
+def add_educations(document, placeholder, educations):
+    """
+    Replaces a placeholder with multiple education entries.
+    :param document: The Spire.Doc document object.
+    :param placeholder: Placeholder to replace (e.g., "{Education}").
+    :param educations: List of education entries.
+    """
+    selections = document.FindAllString(placeholder, True, True)
+    if not selections:
+        print(f"Placeholder {placeholder} not found!")
+        return
+
+    education_text = ""
+    for edu in educations:
+        education_text += (
+            f"{edu['institution']}, {edu.get('location', 'Location')} — {edu['degree']}\n"
+            f"{edu['year']}\n\n"
+        )
+
+    for selection in selections:
+        selection.GetAsOneRange().Text = education_text.strip()
+def add_projects(document, placeholder, projects):
+    """
+    Replaces a placeholder with multiple project entries.
+    :param document: The Spire.Doc document object.
+    :param placeholder: Placeholder to replace (e.g., "{Project Name}").
+    :param projects: List of project entries.
+    """
+    selections = document.FindAllString(placeholder, True, True)
+    if not selections:
+        print(f"Placeholder {placeholder} not found!")
+        return
+
+    projects_text = ""
+    for proj in projects:
+        projects_text += (
+            f"{proj['name']} — Details\n"
+            f"{proj['description']}\n\n"
+        )
+
+    for selection in selections:
+        selection.GetAsOneRange().Text = projects_text.strip()
+def add_skills(document, placeholder, skills):
+    """
+    Replaces a placeholder with a newline-separated list of skills.
+    :param document: The Spire.Doc document object.
+    :param placeholder: Placeholder to replace (e.g., "{Skill}").
+    :param skills: List of skills.
+    """
+    selections = document.FindAllString(placeholder, True, True)
+    if not selections:
+        print(f"Placeholder {placeholder} not found!")
+        return
+
+    skills_text = "\n".join(f"- {skill}" for skill in skills)
+
+    for selection in selections:
+        selection.GetAsOneRange().Text = skills_text.strip()
 @app.get("/")
 def read_root():
     return {"message" : "welcome to the resume builder api"}
@@ -88,55 +176,44 @@ async def generate_resume(request: Request):
     skills = data["skills"]
     projects = data["projects"]
     template_name = data["selectedTemplate"]
-    # Load the template
     template_path = f"./app/templates/docx/{template_name}.docx"
     print(f"tPath: {template_path}")
     if not os.path.exists(template_path):
         raise HTTPException(status_code=404, detail="Template not found")
 
-    doc = Document(template_path)
+    document = Document()
+    document.LoadFromFile(template_path)
 
-    for paragraph in doc.paragraphs:
-        paragraph.text = paragraph.text.replace("{Your Name}", personal_info["fullName"])
-        paragraph.text = paragraph.text.replace("{Your Email}", personal_info["email"])
-        paragraph.text = paragraph.text.replace("{Your Phone}", personal_info["phone"])
-    
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                if "{Company}" in cell.text:
-                    cell.text = ""
-                    for exp in work_experiences:
-                        cell.add_paragraph(
-                            f"{exp['company']}, {exp['location']} — {exp['jobTitle']}\n"
-                            f"{exp['duration']}\n"
-                            f"{exp['description']}"
-                        )
+    personal_replacements = {
+        "{Your Name}": personal_info["fullName"],
+        "{Your Email}": personal_info["email"],
+        "{Your Phone}": personal_info["phone"],
+    }
+    replace_placeholders(document, personal_replacements)
 
-                if "{Institution}" in cell.text:
-                    cell.text = ""
-                    for edu in educations:
-                        cell.add_paragraph(
-                            f"{edu['institution']}, Location — {edu['degree']}\n"
-                            f"{edu['year']}"
-                        )
+    add_work_experiences(document, "{WorkExperience}", work_experiences)
 
-                if "{Project Name}" in cell.text:
-                    cell.text = ""
-                    for proj in projects:
-                        cell.add_paragraph(
-                            f"{proj['name']} — Details\n"
-                            f"{proj['description']}"
-                        )
+    add_educations(document, "{Education}", educations)
 
-    for paragraph in doc.paragraphs:
-        if "{Skill}" in paragraph.text:
-            paragraph.text = ""
-            for skill in skills:
-                paragraph.add_run(f"- {skill}\n")
+    add_projects(document, "{Project}", projects)
+
+    add_skills(document, "{Skill}", skills)
+
 
     file_id = str(uuid.uuid4())
     output_path = f"{GENERATED_RESUME_DIR}/{file_id}.docx"
-    doc.save(output_path)
+    document.SaveToFile(output_path, FileFormat.Docx2016)
+    document.Close()
 
     return {"download_url": f"http://127.0.0.1:8000/download/{file_id}"}
+
+@app.get("/download/{file_id}")
+def download_resume(file_id: str):
+    file_path = f"{GENERATED_RESUME_DIR}/{file_id}.docx"
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(
+        file_path,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        filename="resume.docx",
+    )
