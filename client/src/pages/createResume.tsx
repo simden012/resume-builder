@@ -20,7 +20,6 @@ import SkillsForm from "../components/skills";
 import ProjectsForm from "../components/projects";
 import { serverLocalUrl } from "../constants/constants";
 import { ResumeData, Template } from "../interfaces/interface";
-import { WorkExperience, Education, Project } from "../interfaces/interface";
 import { useGlobalState } from "../context/GlobalStateContext";
 const steps = [
   "Choose Template",

@@ -42,7 +42,7 @@ export const GlobalStateProvider = ({ children }: GlobalStateProviderProps) => {
     phone: "",
   });
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([
-    { jobTitle: "", company: "", duration: "", description: "" },
+    { jobTitle: "", company: "", location: "", duration: "", description: "" },
   ]);
   const [skills, setSkills] = useState<string[]>([""]);
   const [projects, setProjects] = useState<Project[]>([

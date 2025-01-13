@@ -23,8 +23,8 @@ app.add_middleware(
 app.mount("/app/templates", StaticFiles(directory="app/templates"), name="app/templates")
 
 TEMPLATE_DIR = "./app/templates/pdf"
-GENERATED_RESUME_DIR = "./generated_resumes"
-
+GENERATED_RESUME_DIR = "./app/generated_resumes"
+os.makedirs(GENERATED_RESUME_DIR, exist_ok=True)
 api_token = os.getenv("LLAMA_API_KEY")
 
 llama = LlamaAPI(api_token)
@@ -87,69 +87,56 @@ async def generate_resume(request: Request):
     educations = data["educations"]
     skills = data["skills"]
     projects = data["projects"]
-    template_name = data["template"]
+    template_name = data["selectedTemplate"]
     # Load the template
-    template_path = f"./templates/docx/{template_name}.docx"
+    template_path = f"./app/templates/docx/{template_name}.docx"
+    print(f"tPath: {template_path}")
     if not os.path.exists(template_path):
         raise HTTPException(status_code=404, detail="Template not found")
 
-    for paragraph in doc.paragraphs:
-        paragraph.text = paragraph.text.replace("{Your Name}", personal_info["fullName"])
-        paragraph.text = paragraph.text.replace("{Your Email}", personal_info["email"])
-        paragraph.text = paragraph.text.replace("{Your Phone}", personal_info["phone"])
     doc = Document(template_path)
 
-    # Fill in personal info
     for paragraph in doc.paragraphs:
         paragraph.text = paragraph.text.replace("{Your Name}", personal_info["fullName"])
         paragraph.text = paragraph.text.replace("{Your Email}", personal_info["email"])
         paragraph.text = paragraph.text.replace("{Your Phone}", personal_info["phone"])
     
-    # Fill in work experiences
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
                 if "{Company}" in cell.text:
-                    # Clear placeholder content
                     cell.text = ""
-                    # Add all work experiences
                     for exp in work_experiences:
                         cell.add_paragraph(
-                            f"{exp['Company']}, {exp['Location']} — {exp['Job Title']}\n"
-                            f"{exp['Duration']}\n"
-                            f"{exp['Job Description']}"
+                            f"{exp['company']}, {exp['location']} — {exp['jobTitle']}\n"
+                            f"{exp['duration']}\n"
+                            f"{exp['description']}"
                         )
 
                 if "{Institution}" in cell.text:
-                    # Clear placeholder content
                     cell.text = ""
-                    # Add all education entries
                     for edu in educations:
                         cell.add_paragraph(
-                            f"{edu['Institution']}, {edu['Location']} — {edu['Degree']}\n"
-                            f"{edu['Duration']}"
+                            f"{edu['institution']}, Location — {edu['degree']}\n"
+                            f"{edu['year']}"
                         )
 
                 if "{Project Name}" in cell.text:
-                    # Clear placeholder content
                     cell.text = ""
-                    # Add all projects
                     for proj in projects:
                         cell.add_paragraph(
-                            f"{proj['Project Name']} — {proj['Detail']}\n"
-                            f"{proj['Description']}"
+                            f"{proj['name']} — Details\n"
+                            f"{proj['description']}"
                         )
 
-    # Fill in skills (optional, as they can be added directly as text)
     for paragraph in doc.paragraphs:
         if "{Skill}" in paragraph.text:
             paragraph.text = ""
             for skill in skills:
                 paragraph.add_run(f"- {skill}\n")
 
-    # Save the filled template
     file_id = str(uuid.uuid4())
-    output_path = f"{GENERATED_RESUME_DIR}/resume_{file_id}.docx"
+    output_path = f"{GENERATED_RESUME_DIR}/{file_id}.docx"
     doc.save(output_path)
 
     return {"download_url": f"http://127.0.0.1:8000/download/{file_id}"}

@@ -34,7 +34,13 @@ const WorkExperienceForm = () => {
   const addWorkExperience = () => {
     setWorkExperiences([
       ...workExperiences,
-      { jobTitle: "", company: "", duration: "", description: "" },
+      {
+        jobTitle: "",
+        company: "",
+        location: "",
+        duration: "",
+        description: "",
+      },
     ]);
   };
   const [open, setOpen] = useState(false);
@@ -112,7 +118,16 @@ const WorkExperienceForm = () => {
               value={experience.company}
               onChange={(e) => handleChange(index, "company", e.target.value)}
             />
+            {/* Location */}
 
+            <TextField
+              fullWidth
+              label="Location"
+              variant="outlined"
+              margin="normal"
+              value={experience.location}
+              onChange={(e) => handleChange(index, "location", e.target.value)}
+            />
             <TextField
               fullWidth
               label="Duration"

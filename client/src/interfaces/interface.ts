@@ -11,6 +11,7 @@ export interface Project {
 export interface WorkExperience {
   jobTitle: string;
   company: string;
+  location: string;
   duration: string;
   description: string;
 }
