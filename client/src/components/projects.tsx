@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useGlobalState } from "../context/GlobalStateContext";
-import { Project } from "../interfaces/types";
+import { Project } from "../interfaces/interface";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import { serverLocalUrl } from "../constants/constants";

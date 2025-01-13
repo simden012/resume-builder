@@ -14,7 +14,7 @@ import {
   ListItemButton,
 } from "@mui/material";
 import { useGlobalState } from "../context/GlobalStateContext";
-import { WorkExperience } from "../interfaces/types";
+import { WorkExperience } from "../interfaces/interface";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import CloseIcon from "@mui/icons-material/Close";
 import { serverLocalUrl } from "../constants/constants";

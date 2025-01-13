@@ -1,7 +1,14 @@
 import React, { createContext, useContext, useState, ReactNode } from "react";
-import { WorkExperience, Project, Education } from "../interfaces/types";
+import {
+  WorkExperience,
+  Project,
+  Education,
+  PersonalInfo,
+} from "../interfaces/interface";
 
 interface GlobalStateContextType {
+  personalInfo: PersonalInfo;
+  setPersonalInfo: React.Dispatch<React.SetStateAction<PersonalInfo>>;
   workExperiences: WorkExperience[];
   setWorkExperiences: React.Dispatch<React.SetStateAction<WorkExperience[]>>;
   skills: string[];
@@ -29,6 +36,11 @@ interface GlobalStateProviderProps {
 }
 
 export const GlobalStateProvider = ({ children }: GlobalStateProviderProps) => {
+  const [personalInfo, setPersonalInfo] = useState<PersonalInfo>({
+    fullName: "",
+    email: "",
+    phone: "",
+  });
   const [workExperiences, setWorkExperiences] = useState<WorkExperience[]>([
     { jobTitle: "", company: "", duration: "", description: "" },
   ]);
@@ -43,6 +55,8 @@ export const GlobalStateProvider = ({ children }: GlobalStateProviderProps) => {
   return (
     <GlobalStateContext.Provider
       value={{
+        personalInfo,
+        setPersonalInfo,
         workExperiences,
         setWorkExperiences,
         skills,
