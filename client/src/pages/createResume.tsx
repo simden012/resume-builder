@@ -13,14 +13,15 @@ import {
   CardContent,
   TextField,
 } from "@mui/material";
-import Input from "@material-ui/core/Input";
 import Grid from "@mui/material/Grid2";
 import WorkExperienceForm from "../components/workExperience";
 import EducationForm from "../components/education";
 import SkillsForm from "../components/skills";
 import ProjectsForm from "../components/projects";
 import { serverLocalUrl } from "../constants/constants";
-import { Template } from "../interfaces/types";
+import { ResumeData, Template } from "../interfaces/interface";
+import { WorkExperience, Education, Project } from "../interfaces/interface";
+import { useGlobalState } from "../context/GlobalStateContext";
 const steps = [
   "Choose Template",
   "Personal Info",
@@ -34,11 +35,35 @@ const steps = [
 const CreateResume = () => {
   const [activeStep, setActiveStep] = useState(0);
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [selectedTemplate, setSelectedTemplate] = useState<string>();
-
-  const handleNext = () => setActiveStep((prevStep) => prevStep + 1);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>("");
+  const {
+    personalInfo,
+    workExperiences,
+    educations,
+    projects,
+    skills,
+    setPersonalInfo,
+  } = useGlobalState();
+  const handlePersonnalInfoChange = (field: string, value: string) => {
+    setPersonalInfo((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+  const handleNext = () => {
+    if (activeStep === steps.length - 1) {
+      if (canDownloadResume()) {
+        handleGenerateResume();
+      }
+      console.log("Download docx resume");
+      return;
+    }
+    setActiveStep((prevStep) => prevStep + 1);
+  };
   const handleBack = () => setActiveStep((prevStep) => prevStep - 1);
-
+  const canDownloadResume = () => {
+    return true;
+  };
   useEffect(() => {
     const fetchTemplates = async () => {
       try {
@@ -51,6 +76,41 @@ const CreateResume = () => {
     };
     fetchTemplates();
   }, []);
+
+  const handleGenerateResume = async () => {
+    const resumeData: ResumeData = {
+      selectedTemplate,
+      personalInfo,
+      workExperiences,
+      educations,
+      skills,
+      projects,
+    };
+
+    try {
+      const response = await fetch("http://127.0.0.1:8000/generate-resume", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(resumeData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Create a download link for the generated resume
+        const downloadLink = document.createElement("a");
+        downloadLink.href = data.download_url;
+        downloadLink.download = "resume.pdf";
+        downloadLink.click();
+      } else {
+        console.error("Failed to generate resume:", data.error);
+      }
+    } catch (error) {
+      console.error("Error sending data to server:", error);
+    }
+  };
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" align="center" gutterBottom>
@@ -78,12 +138,11 @@ const CreateResume = () => {
             {activeStep === 0 && (
               <>
                 <Typography variant="h6" gutterBottom>
-                  Choose a Template
+                  Select a Template
                 </Typography>
                 <Grid container spacing={2}>
                   {templates.map((template) => {
                     const imgPath = `${serverLocalUrl}${template.path}/png/${template.name}.png`;
-                    console.log(imgPath);
                     return (
                       <Grid sx={{ xs: 12, sm: 6, md: 4 }} key={template.name}>
                         <Card
@@ -124,12 +183,20 @@ const CreateResume = () => {
                   label="Full Name"
                   variant="outlined"
                   margin="normal"
+                  value={personalInfo.fullName}
+                  onChange={(e) =>
+                    handlePersonnalInfoChange("fullName", e.target.value)
+                  }
                 />
                 <TextField
                   fullWidth
                   label="Email Address"
                   variant="outlined"
                   margin="normal"
+                  value={personalInfo.email}
+                  onChange={(e) =>
+                    handlePersonnalInfoChange("email", e.target.value)
+                  }
                 />
                 <TextField
                   fullWidth
@@ -137,6 +204,10 @@ const CreateResume = () => {
                   variant="outlined"
                   margin="normal"
                   type="number"
+                  value={personalInfo.phone}
+                  onChange={(e) =>
+                    handlePersonnalInfoChange("phone", e.target.value)
+                  }
                 />
               </>
             )}
@@ -155,12 +226,11 @@ const CreateResume = () => {
                 variant="contained"
                 color="primary"
                 onClick={handleNext}
-                disabled={
-                  activeStep === steps.length - 1 ||
-                  (activeStep === 0 && !selectedTemplate)
-                }
+                disabled={activeStep === 0 && !selectedTemplate}
               >
-                {activeStep === steps.length - 1 ? "Finish" : "Next"}
+                {activeStep === steps.length - 1
+                  ? "Download docx resume"
+                  : "Next"}
               </Button>
             </Box>
           </Paper>
