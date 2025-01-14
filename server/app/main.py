@@ -24,8 +24,10 @@ app.mount("/app/templates", StaticFiles(directory="app/templates"), name="app/te
 
 TEMPLATE_DIR = "./app/templates/pdf"
 GENERATED_RESUME_DIR = "./app/generated_resumes"
+
 os.makedirs(GENERATED_RESUME_DIR, exist_ok=True)
-api_token = os.getenv("LLAMA_API_KEY")
+
+api_token = os.getenv("LLAMA_API_KEY") ##api_key for llama api
 
 llama = LlamaAPI(api_token)
 class SuggestionRequest(BaseModel):
