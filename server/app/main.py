@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
-from spire.doc import Document, FileFormat, DocPicture
+from spire.doc import *
 # from app.routers import resume
 from llamaapi import LlamaAPI
 import uuid
@@ -14,64 +14,75 @@ load_dotenv()
 app = FastAPI()
 
 app.add_middleware(
-    CORSMiddleware, 
+    CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.mount("/app/templates", StaticFiles(directory="app/templates"), name="app/templates")
+app.mount("/app/templates", StaticFiles(directory="app/templates"),
+          name="app/templates")
 
 TEMPLATE_DIR = "./app/templates/pdf"
 GENERATED_RESUME_DIR = "./app/generated_resumes"
 
 os.makedirs(GENERATED_RESUME_DIR, exist_ok=True)
 
-api_token = os.getenv("LLAMA_API_KEY") ##api_key for llama api
+api_token = os.getenv("LLAMA_API_KEY")  # api_key for llama api
 
 llama = LlamaAPI(api_token)
+
+
 class SuggestionRequest(BaseModel):
-    typeOfSuggestion: str ## job or project
+    typeOfSuggestion: str  # job or project
     description: str
 
+
 def replace_placeholders(document, replacements):
-    """
-    Replaces placeholders in the document with corresponding values.
-    :param document: The Spire.Doc document object.
-    :param replacements: A dictionary of placeholders and their replacements.
-    """
+
     for placeholder, value in replacements.items():
         document.Replace(placeholder, value, False, True)
 
+
 def add_work_experiences(document, placeholder, experiences):
-    """
-    Replaces a placeholder with multiple work experiences.
-    :param document: The Spire.Doc document object.
-    :param placeholder: Placeholder to replace (e.g., "{WorkExperience}").
-    :param experiences: List of work experiences.
-    """
     selections = document.FindAllString(placeholder, True, True)
+
     if not selections:
         print(f"Placeholder {placeholder} not found!")
         return
 
-    experience_text = ""
-    for exp in experiences:
-        experience_text += (
-            f"{exp['company']}, {exp['location']} — {exp['jobTitle']}\n"
-            f"{exp['duration']}\n"
-            f"{exp['description']}\n\n"
-        )
-
     for selection in selections:
-        selection.GetAsOneRange().Text = experience_text.strip()
+        range_text = selection.GetAsOneRange()
+
+        if range_text is None:
+            print("Error: Could not get text range from selection.")
+            continue
+
+        paragraph = range_text.OwnerParagraph
+        paragraph.ChildObjects.Clear()
+
+        for exp in experiences:
+            name_range = paragraph.AppendText(
+                f"{exp['company']}, {exp['location']} — {exp['jobTitle']}\n")
+            name_range.CharacterFormat.FontName = "Arial"
+            name_range.CharacterFormat.FontSize = 14
+            name_range.CharacterFormat.Bold = True
+
+            duration_range = paragraph.AppendText(f"{exp['duration']}\n")
+            duration_range.CharacterFormat.FontName = "Arial"
+            duration_range.CharacterFormat.FontSize = 12
+            duration_range.CharacterFormat.Italic = True
+            duration_range.CharacterFormat.TextColor = Color.get_DarkGray()
+
+            desc_range = paragraph.AppendText(f"{exp['description']}\n\n")
+            desc_range.CharacterFormat.FontName = "Arial"
+            desc_range.CharacterFormat.FontSize = 10
+            desc_range.CharacterFormat.TextColor = Color.get_Gray()
+            desc_range.CharacterFormat.Bold = False
+
+
 def add_educations(document, placeholder, educations):
-    """
-    Replaces a placeholder with multiple education entries.
-    :param document: The Spire.Doc document object.
-    :param placeholder: Placeholder to replace (e.g., "{Education}").
-    :param educations: List of education entries.
-    """
+
     selections = document.FindAllString(placeholder, True, True)
     if not selections:
         print(f"Placeholder {placeholder} not found!")
@@ -86,34 +97,41 @@ def add_educations(document, placeholder, educations):
 
     for selection in selections:
         selection.GetAsOneRange().Text = education_text.strip()
+
+
 def add_projects(document, placeholder, projects):
-    """
-    Replaces a placeholder with multiple project entries.
-    :param document: The Spire.Doc document object.
-    :param placeholder: Placeholder to replace (e.g., "{Project Name}").
-    :param projects: List of project entries.
-    """
     selections = document.FindAllString(placeholder, True, True)
+
     if not selections:
         print(f"Placeholder {placeholder} not found!")
         return
 
-    projects_text = ""
-    for proj in projects:
-        projects_text += (
-            f"{proj['name']} — Details\n"
-            f"{proj['description']}\n\n"
-        )
-
     for selection in selections:
-        selection.GetAsOneRange().Text = projects_text.strip()
+        range_text = selection.GetAsOneRange()
+
+        if range_text is None:
+            print("Error: Could not get text range from selection.")
+            continue
+
+        paragraph = range_text.OwnerParagraph
+
+        paragraph.ChildObjects.Clear()
+
+        for proj in projects:
+            name_range = paragraph.AppendText(f"{proj['name']} — Details\n")
+            name_range.CharacterFormat.FontName = "Arial"
+            name_range.CharacterFormat.FontSize = 14
+            name_range.CharacterFormat.Bold = True
+
+            desc_range = paragraph.AppendText(f"{proj['description']}\n\n")
+            desc_range.CharacterFormat.FontName = "Arial"
+            desc_range.CharacterFormat.FontSize = 10
+            desc_range.CharacterFormat.TextColor = Color.get_Gray()
+            desc_range.CharacterFormat.Bold = False
+
+
 def add_skills(document, placeholder, skills):
-    """
-    Replaces a placeholder with a newline-separated list of skills.
-    :param document: The Spire.Doc document object.
-    :param placeholder: Placeholder to replace (e.g., "{Skill}").
-    :param skills: List of skills.
-    """
+
     selections = document.FindAllString(placeholder, True, True)
     if not selections:
         print(f"Placeholder {placeholder} not found!")
@@ -123,14 +141,19 @@ def add_skills(document, placeholder, skills):
 
     for selection in selections:
         selection.GetAsOneRange().Text = skills_text.strip()
+
+
 @app.get("/")
 def read_root():
-    return {"message" : "welcome to the resume builder api"}
+    return {"message": "welcome to the resume builder api"}
+
 
 @app.get("/templates")
 def get_templates():
-    templates = [{"name": os.path.splitext(f)[0], "path": f"/app/templates"} for f in os.listdir(TEMPLATE_DIR)]
+    templates = [{"name": os.path.splitext(
+        f)[0], "path": f"/app/templates"} for f in os.listdir(TEMPLATE_DIR)]
     return {"templates": templates}
+
 
 @app.get("/template-preview/{filename}")
 def get_template_preview(filename: str):
@@ -138,6 +161,7 @@ def get_template_preview(filename: str):
     if os.path.exists(filepath):
         return FileResponse(filepath)
     return {"error": "File not found"}
+
 
 @app.post("/ai-suggestions")
 def ai_suggestions(data: SuggestionRequest):
@@ -156,19 +180,21 @@ def ai_suggestions(data: SuggestionRequest):
                     2. [Second Suggestion]
                     3. [Third Suggestion]
                                     """},
-                                ]
+            ]
         }
 
         response = llama.run(api_request_json)
         response_text = response.json()["choices"][0]["message"]["content"]
 
         suggestions = response_text.split("\n")
-        clean_suggestions = [s.strip() for s in suggestions if s.strip().startswith(("1.", "2.", "3."))]
+        clean_suggestions = [
+            s.strip() for s in suggestions if s.strip().startswith(("1.", "2.", "3."))]
 
         return {"suggestions": clean_suggestions}
     except Exception as e:
         return {"error": str(e)}
-    
+
+
 @app.post("/generate-resume")
 async def generate_resume(request: Request):
     data = await request.json()
@@ -184,15 +210,16 @@ async def generate_resume(request: Request):
         raise HTTPException(status_code=404, detail="Template not found")
 
     document = Document()
+    print(f"document created")
     document.LoadFromFile(template_path)
-
+    print(f"template loaded")
     personal_replacements = {
         "{Your Name}": personal_info["fullName"],
         "{Your Email}": personal_info["email"],
         "{Your Phone}": personal_info["phone"],
     }
     replace_placeholders(document, personal_replacements)
-
+    print(f"replace_placeholders")
     add_work_experiences(document, "{WorkExperience}", work_experiences)
 
     add_educations(document, "{Education}", educations)
@@ -201,13 +228,13 @@ async def generate_resume(request: Request):
 
     add_skills(document, "{Skill}", skills)
 
-
     file_id = str(uuid.uuid4())
     output_path = f"{GENERATED_RESUME_DIR}/{file_id}.docx"
     document.SaveToFile(output_path, FileFormat.Docx2016)
     document.Close()
 
     return {"download_url": f"http://127.0.0.1:8000/download/{file_id}"}
+
 
 @app.get("/download/{file_id}")
 def download_resume(file_id: str):
